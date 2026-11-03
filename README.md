@@ -1,3 +1,5 @@
+![M365 Script Checker: know what a PowerShell script does to your tenant before you run it](assets/social-preview.png)
+
 # M365 Script Checker
 
 A PowerShell script checker for Microsoft 365. Before you run a script, it tells you what the script would read, change or delete in your tenant and on your computer. It reads the script as text and never runs it, or PowerShell.

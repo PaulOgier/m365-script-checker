@@ -32,7 +32,7 @@ YOU ASSUME ALL RISK ASSOCIATED WITH THE USE OF THIS SOFTWARE.
 Author:       Paul Ogier
 Created:      2026-09-15
 Updated:      2026-11-03
-Version:      0.5.0
+Version:      0.5.1
 Status:       Pre-release
 Python:       3.9+
 Dependencies: None. Stdlib only; never runs PowerShell or the script it checks.
@@ -73,7 +73,7 @@ import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 HERE = Path(__file__).resolve().parent
 POLICY_FILE = HERE / 'verbs' / 'policy.json'
