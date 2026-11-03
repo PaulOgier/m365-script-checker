@@ -1,0 +1,5 @@
+__pycache__/
+.DS_Store
+/developers/corpus/real/*.ps1
+/developers/corpus/real/*.psm1
+.claude/
