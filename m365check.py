@@ -32,7 +32,7 @@ YOU ASSUME ALL RISK ASSOCIATED WITH THE USE OF THIS SOFTWARE.
 Author:       Paul Ogier
 Created:      2026-09-15
 Updated:      2026-11-04
-Version:      0.6.0
+Version:      0.6.1
 Status:       Pre-release
 Python:       3.9+
 Dependencies: None. Stdlib only; never runs PowerShell or the script it checks.
@@ -74,7 +74,7 @@ import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 HERE = Path(__file__).resolve().parent
 POLICY_FILE = HERE / 'verbs' / 'policy.json'
@@ -675,7 +675,7 @@ def splat_table(masked, strings, variables=None):
 # PowerShell reads these as ordinary spaces, dashes and quotes, and web pages (Reddit, blogs, Word) put them into
 # scripts people copy. Unread, a non-breaking-space indent hides the command after it and an en-dash -DeleteContent
 # hides the switch, so they are mapped to ASCII before anything else. One character each, so columns survive.
-TYPOGRAPHY = str.maketrans({**{c: ' ' for c in '\x00\x1f\x0b\x0c\x85               　'},
+TYPOGRAPHY = str.maketrans({**{c: ' ' for c in '\u2028\u2029\x00\x1f\x0b\x0c\x85               　'},
                             '–': '-', '—': '-', '―': '-',
                             '“': '"', '”': '"', '„': '"', '‘': "'", '’': "'", '‚': "'", '‛': "'"})
 
@@ -905,6 +905,11 @@ class Checker:
 
     def check_masked(self, text, masked, strings, subs, name):
         """The findings for one masked reading of text."""
+        # param(...) Remove-X on one line: the command after a param block starts a statement; mark it as one
+        for m in reversed(list(re.finditer(r'(?i)\bparam\s*\(', masked))):
+            end = subexpr_end(masked, m.end())
+            if masked[end:end + 1] in (' ', '\t'):
+                masked = masked[:end] + ';' + masked[end + 1:]
         variables = var_table(masked, strings)
         self.splats = splat_table(masked, strings, variables)
         self.variables = variables
@@ -1609,6 +1614,12 @@ class Checker:
             self.add_download(outfile)
         save_note = f'saves the download as {saved}' if saved else ''
         kind = self.policy.host_kind(host) if host else ''
+        if graph and host and kind != 'microsoft':
+            # both send the token to any absolute address: the Graph SDK's token provider has no allowed-host list, and the
+            # Intune SDK uses an absolute -Url as given and always adds the Authorization header (both read in their source)
+            return Finding(file, line, SUSPICIOUS, f'sends your Microsoft Graph sign-in token to {host}', command=shown,
+                           note=f'{low} attaches the signed-in session\'s access token to whatever address it is given',
+                           security='whoever runs that host can act as you in Microsoft Graph until the token expires')
         if host and kind != 'microsoft':
             if lvl > READ or body:
                 if kind == 'tenant':

